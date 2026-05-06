@@ -43,8 +43,14 @@ import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Material;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.inventory.EntityEquipment;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 import org.incendo.cloud.annotation.specifier.Greedy;
 import org.incendo.cloud.annotation.specifier.Range;
 import org.incendo.cloud.annotations.Argument;
@@ -150,18 +156,28 @@ public class SessionCommands {
     @CommandDescription("easyarmorstands.command.description.clone")
     @RequireElementSelection
     public void clone(EasPlayer sender, ElementSelection selection) {
+        boolean survivalFriendly = EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode();
         List<Element> clones = new ArrayList<>();
         for (Element element : selection.elements()) {
             ElementType type = element.getType();
             PropertyContainer properties = PropertyContainer.immutable(element.getProperties());
             if (sender.canCreateElement(type, properties)) {
+                if (survivalFriendly) {
+                    boolean armorStandCloneAllowed = EasyArmorStandsPlugin.getInstance().survivalFriendly().allowCloneArmorStands;
+                    if (!(element instanceof EntityElement<?> entityElement && entityElement.getEntity() instanceof ArmorStand) || !armorStandCloneAllowed) {
+                        continue;
+                    }
+                }
                 Element clone;
-                if (element instanceof EntityElement<?> entityElement && sender.permissions().test(Permissions.COPY_ENTITY)) {
+                if (!survivalFriendly && element instanceof EntityElement<?> entityElement && sender.permissions().test(Permissions.COPY_ENTITY)) {
                     clone = cloneEntity(entityElement);
                 } else {
                     clone = type.createElement(properties);
                 }
                 if (clone != null) {
+                    if (survivalFriendly && clone instanceof EntityElement<?> entityClone) {
+                        clearEquipment(entityClone.getEntity());
+                    }
                     clones.add(clone);
                 }
             }
@@ -191,6 +207,19 @@ public class SessionCommands {
     private <E extends Entity> EntityElement<E> cloneEntity(EntityElement<E> element) {
         E copy = element.getType().getEntityClass().cast(element.getEntity().copy(element.getEntity().getLocation()));
         return element.getType().getElement(copy);
+    }
+
+    private void clearEquipment(Entity entity) {
+        if (!(entity instanceof LivingEntity livingEntity)) {
+            return;
+        }
+        EntityEquipment equipment = livingEntity.getEquipment();
+        if (equipment == null) {
+            return;
+        }
+        for (EquipmentSlot slot : List.of(EquipmentSlot.HAND, EquipmentSlot.OFF_HAND, EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.BODY)) {
+            equipment.setItem(slot, new ItemStack(Material.AIR));
+        }
     }
 
     @Command("spawn")
@@ -391,6 +420,10 @@ public class SessionCommands {
     @CommandDescription("easyarmorstands.command.description.description")
     @RequireElementSelection
     public void showDescription(EasPlayer sender, ElementSelection selection) {
+        if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() && !EasyArmorStandsPlugin.getInstance().survivalFriendly().allowDescriptions) {
+            sender.sendMessage(Message.error("easyarmorstands.error.description-unsupported"));
+            return;
+        }
         PropertyContainer properties = selection.properties(sender);
         Property<Optional<Component>> property = properties.getOrNull(MannequinPropertyTypes.DESCRIPTION);
         if (property == null) {
@@ -406,6 +439,10 @@ public class SessionCommands {
     @CommandDescription("easyarmorstands.command.description.description.set")
     @RequireElementSelection
     public void setDescription(EasPlayer sender, ElementSelection selection, @Argument("value") @Decoder.MiniMessage @Greedy Component description) {
+        if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() && !EasyArmorStandsPlugin.getInstance().survivalFriendly().allowDescriptions) {
+            sender.sendMessage(Message.error("easyarmorstands.error.description-unsupported"));
+            return;
+        }
         PropertyContainer properties = selection.properties(sender);
         Property<Optional<Component>> property = properties.getOrNull(MannequinPropertyTypes.DESCRIPTION);
         if (property == null) {
@@ -422,6 +459,10 @@ public class SessionCommands {
     @CommandDescription("easyarmorstands.command.description.description.clear")
     @RequireElementSelection
     public void clearDescription(EasPlayer sender, ElementSelection selection) {
+        if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() && !EasyArmorStandsPlugin.getInstance().survivalFriendly().allowDescriptions) {
+            sender.sendMessage(Message.error("easyarmorstands.error.description-unsupported"));
+            return;
+        }
         PropertyContainer properties = selection.properties(sender);
         Property<Optional<Component>> property = properties.getOrNull(MannequinPropertyTypes.DESCRIPTION);
         if (property == null) {
@@ -438,6 +479,10 @@ public class SessionCommands {
     @CommandDescription("easyarmorstands.command.description.cantick")
     @RequireElementSelection
     public void setCanTick(EasPlayer sender, ElementSelection selection, @Argument("value") boolean canTick) {
+        if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() && !EasyArmorStandsPlugin.getInstance().survivalFriendly().allowCanTick) {
+            sender.sendMessage(Message.error("easyarmorstands.error.can-tick-unsupported-entity"));
+            return;
+        }
         PropertyContainer properties = selection.properties(sender);
         Property<Boolean> property = properties.getOrNull(ArmorStandPropertyTypes.CAN_TICK);
         if (property == null) {
@@ -479,6 +524,10 @@ public class SessionCommands {
     @CommandDescription("easyarmorstands.command.description.tag.add")
     @RequireElementSelection
     public void addTag(EasPlayer sender, ElementSelection selection, @Argument("value") String tag) {
+        if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() && !EasyArmorStandsPlugin.getInstance().survivalFriendly().allowTags) {
+            sender.sendMessage(Message.error("easyarmorstands.error.cannot-add-tag"));
+            return;
+        }
         List<PropertyContainer> changed = new ArrayList<>();
         for (Element element : selection.elements()) {
             TrackedPropertyContainer properties = new TrackedPropertyContainer(element, sender);
@@ -509,6 +558,10 @@ public class SessionCommands {
     @CommandDescription("easyarmorstands.command.description.tag.remove")
     @RequireElementSelection
     public void removeTag(EasPlayer sender, ElementSelection selection, @Argument(value = "value", suggestions = "selection_tags") String tag) {
+        if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() && !EasyArmorStandsPlugin.getInstance().survivalFriendly().allowTags) {
+            sender.sendMessage(Message.error("easyarmorstands.error.cannot-remove-tag"));
+            return;
+        }
         List<PropertyContainer> changed = new ArrayList<>();
         for (Element element : selection.elements()) {
             TrackedPropertyContainer properties = new TrackedPropertyContainer(element, sender);
@@ -539,6 +592,10 @@ public class SessionCommands {
     @CommandDescription("easyarmorstands.command.description.tag.list")
     @RequireElementSelection
     public void listTags(EasPlayer sender, ElementSelection selection) {
+        if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() && !EasyArmorStandsPlugin.getInstance().survivalFriendly().allowTags) {
+            sender.sendMessage(Message.warning("easyarmorstands.warning.tags-empty"));
+            return;
+        }
         Set<String> tags = new TreeSet<>();
         for (Element element : selection.elements()) {
             Property<Set<String>> property = element.getProperties().getOrNull(EntityPropertyTypes.TAGS);
@@ -566,6 +623,10 @@ public class SessionCommands {
     @CommandDescription("easyarmorstands.command.description.select.tag")
     @RequireSession
     public void selectTag(EasPlayer sender, Session session, @Argument(value = "value", suggestions = "discoverable_tags") String tag) {
+        if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() && !EasyArmorStandsPlugin.getInstance().survivalFriendly().allowTags) {
+            sender.sendMessage(Message.error("easyarmorstands.error.cannot-add-tag"));
+            return;
+        }
         selectGroup(sender, session, sender.get().getWorld().getEntities().stream()
                 .filter(entity -> entity.getScoreboardTags().contains(tag))
                 .map(EasyArmorStandsPlugin.getInstance()::getElement)
@@ -577,6 +638,9 @@ public class SessionCommands {
 
     @Suggestions("selection_tags")
     public Set<String> getSelectionTags(CommandContext<EasCommandSender> ctx, String input) {
+        if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() && !EasyArmorStandsPlugin.getInstance().survivalFriendly().allowTags) {
+            return Collections.emptySet();
+        }
         ElementSelection selection = ctx.getOrDefault(elementSelectionKey(), null);
         if (selection == null) {
             return Collections.emptySet();
@@ -598,6 +662,9 @@ public class SessionCommands {
 
     @Suggestions("discoverable_tags")
     public Set<String> getDiscoverableTags(CommandContext<EasCommandSender> ctx, String input) {
+        if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() && !EasyArmorStandsPlugin.getInstance().survivalFriendly().allowTags) {
+            return Collections.emptySet();
+        }
         EasCommandSender sender = ctx.sender();
         if (!(sender instanceof EasPlayer)) {
             return Collections.emptySet();

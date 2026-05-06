@@ -1,5 +1,6 @@
 package me.m56738.easyarmorstands.command.requirement;
 
+import me.m56738.easyarmorstands.EasyArmorStandsPlugin;
 import me.m56738.easyarmorstands.command.sender.EasCommandSender;
 import me.m56738.easyarmorstands.message.Message;
 import me.m56738.easyarmorstands.permission.Permissions;
@@ -15,6 +16,9 @@ public class SessionRequirement implements CommandRequirement {
         sender.sendMessage(Message.error("easyarmorstands.error.not-using-editor"));
         if (sender.get().hasPermission(Permissions.GIVE)) {
             sender.sendMessage(Message.hint("easyarmorstands.hint.give-tool", Message.command("/eas give")));
+        }
+        if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode()) {
+            sender.sendMessage(Message.hint("easyarmorstands.hint.show-help", Message.command("/eas")));
         }
     }
 

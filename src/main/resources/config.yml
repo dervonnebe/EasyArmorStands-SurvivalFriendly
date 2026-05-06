@@ -37,6 +37,19 @@ editor:
   tool:
     name: <gold><lang:easyarmorstands.tool-name>
     type: blaze_rod
+survival-friendly:
+  enabled: true
+  allow-clone-armor-stands: true
+  allow-debug: false
+  allow-descriptions: false
+  allow-marker: false
+  allow-register: false
+  allow-tags: false
+  allow-can-tick: false
+  allow-interaction-entities: false
+  allow-mannequins: false
+  show-action-bar-help: true
+  copy-equipment: false
 integration:
   BentoBox:
     enabled: true

@@ -1,5 +1,6 @@
 package me.m56738.easyarmorstands.command;
 
+import me.m56738.easyarmorstands.EasyArmorStandsPlugin;
 import me.m56738.easyarmorstands.api.element.Element;
 import me.m56738.easyarmorstands.api.property.Property;
 import me.m56738.easyarmorstands.api.property.PropertyContainer;
@@ -64,7 +65,7 @@ public class ClipboardCommands {
     @RequireElement
     public void copy(EasPlayer sender, Clipboard clipboard, Element element) {
         element.getProperties().forEach(property -> {
-            if (property.getType().canCopy(sender.player())) {
+            if (property.getType().canCopy(sender.player()) && canCopy(property.getType())) {
                 copyProperty(clipboard, property);
             }
         });
@@ -75,6 +76,17 @@ public class ClipboardCommands {
 
     private <T> void copyProperty(Clipboard clipboard, Property<T> property) {
         clipboard.getProperties().put(property.getType(), property.getValue());
+    }
+
+    private boolean canCopy(PropertyType<?> type) {
+        if (!EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode()) {
+            return true;
+        }
+        if (EasyArmorStandsPlugin.getInstance().survivalFriendly().copyEquipment) {
+            return true;
+        }
+        String permission = type.getPermission();
+        return permission == null || !permission.startsWith("easyarmorstands.property.equipment.");
     }
 
     @Command("paste")

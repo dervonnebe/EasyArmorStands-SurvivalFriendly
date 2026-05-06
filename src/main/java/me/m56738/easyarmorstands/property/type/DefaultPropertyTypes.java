@@ -11,17 +11,18 @@ import me.m56738.easyarmorstands.api.property.type.ItemDisplayPropertyTypes;
 import me.m56738.easyarmorstands.api.property.type.MannequinPropertyTypes;
 import me.m56738.easyarmorstands.api.property.type.PropertyTypeRegistry;
 import me.m56738.easyarmorstands.api.property.type.TextDisplayPropertyTypes;
+import me.m56738.easyarmorstands.config.SurvivalFriendlyConfig;
 import org.bukkit.inventory.EquipmentSlot;
 
 public class DefaultPropertyTypes {
-    public DefaultPropertyTypes(PropertyTypeRegistry registry) {
-        registerEntityProperties(registry);
-        registerArmorStandProperties(registry);
+    public DefaultPropertyTypes(PropertyTypeRegistry registry, SurvivalFriendlyConfig survivalFriendly) {
+        registerEntityProperties(registry, survivalFriendly);
+        registerArmorStandProperties(registry, survivalFriendly);
         registerDisplayProperties(registry);
-        registerMannequinProperties(registry);
+        registerMannequinProperties(registry, survivalFriendly);
     }
 
-    private void registerEntityProperties(PropertyTypeRegistry registry) {
+    private void registerEntityProperties(PropertyTypeRegistry registry, SurvivalFriendlyConfig survivalFriendly) {
         registry.register(EntityPropertyTypes.AI);
         registry.register(EntityPropertyTypes.CUSTOM_NAME);
         registry.register(EntityPropertyTypes.CUSTOM_NAME_VISIBLE);
@@ -29,21 +30,27 @@ public class DefaultPropertyTypes {
         registry.register(EntityPropertyTypes.LOCATION);
         registry.register(EntityPropertyTypes.SCALE);
         registry.register(EntityPropertyTypes.SILENT);
-        registry.register(EntityPropertyTypes.TAGS);
+        if (!survivalFriendly.enabled || survivalFriendly.allowTags) {
+            registry.register(EntityPropertyTypes.TAGS);
+        }
         registry.register(EntityPropertyTypes.VISIBLE);
         for (EquipmentSlot slot : EquipmentSlot.values()) {
             registry.register(EntityPropertyTypes.EQUIPMENT.get(slot));
         }
     }
 
-    private void registerArmorStandProperties(PropertyTypeRegistry registry) {
+    private void registerArmorStandProperties(PropertyTypeRegistry registry, SurvivalFriendlyConfig survivalFriendly) {
         registry.register(ArmorStandPropertyTypes.ARMS);
         registry.register(ArmorStandPropertyTypes.BASE_PLATE);
-        registry.register(ArmorStandPropertyTypes.CAN_TICK);
+        if (!survivalFriendly.enabled || survivalFriendly.allowCanTick) {
+            registry.register(ArmorStandPropertyTypes.CAN_TICK);
+        }
         registry.register(ArmorStandPropertyTypes.GRAVITY);
         registry.register(ArmorStandPropertyTypes.INVULNERABLE);
         registry.register(ArmorStandPropertyTypes.LOCK);
-        registry.register(ArmorStandPropertyTypes.MARKER);
+        if (!survivalFriendly.enabled || survivalFriendly.allowMarker) {
+            registry.register(ArmorStandPropertyTypes.MARKER);
+        }
         registry.register(ArmorStandPropertyTypes.SIZE);
         for (ArmorStandPart part : ArmorStandPart.values()) {
             registry.register(ArmorStandPropertyTypes.POSE.get(part));
@@ -73,12 +80,17 @@ public class DefaultPropertyTypes {
         registry.register(InteractionPropertyTypes.RESPONSIVE);
     }
 
-    private void registerMannequinProperties(PropertyTypeRegistry registry) {
+    private void registerMannequinProperties(PropertyTypeRegistry registry, SurvivalFriendlyConfig survivalFriendly) {
+        if (survivalFriendly.enabled && !survivalFriendly.allowMannequins) {
+            return;
+        }
         registry.register(MannequinPropertyTypes.MAIN_HAND);
         registry.register(MannequinPropertyTypes.PROFILE);
         registry.register(MannequinPropertyTypes.IMMOVABLE);
         registry.register(MannequinPropertyTypes.POSE);
-        registry.register(MannequinPropertyTypes.DESCRIPTION);
+        if (!survivalFriendly.enabled || survivalFriendly.allowDescriptions) {
+            registry.register(MannequinPropertyTypes.DESCRIPTION);
+        }
         for (SkinPart part : SkinPart.values()) {
             registry.register(MannequinPropertyTypes.SKIN_PART_VISIBLE.get(part));
         }

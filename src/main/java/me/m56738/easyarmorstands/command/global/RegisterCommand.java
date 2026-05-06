@@ -22,6 +22,10 @@ public class RegisterCommand {
     @Permission(Permissions.REGISTER)
     @CommandDescription("easyarmorstands.command.description.register")
     public void register(EasCommandSender sender, @Argument("entity") MultipleEntitySelector selector) {
+        if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() && !EasyArmorStandsPlugin.getInstance().survivalFriendly().allowRegister) {
+            sender.sendMessage(Message.error("easyarmorstands.error.not-using-editor"));
+            return;
+        }
         EasyArmorStandsPlugin plugin = EasyArmorStandsPlugin.getInstance();
         int count = 0;
         for (Entity entity : selector.values()) {
@@ -43,6 +47,10 @@ public class RegisterCommand {
     @Permission(Permissions.REGISTER)
     @CommandDescription("easyarmorstands.command.description.unregister")
     public void unregister(EasCommandSender sender, @Argument("entity") MultipleEntitySelector selector) {
+        if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() && !EasyArmorStandsPlugin.getInstance().survivalFriendly().allowRegister) {
+            sender.sendMessage(Message.error("easyarmorstands.error.not-using-editor"));
+            return;
+        }
         int count = 0;
         for (Entity entity : selector.values()) {
             PersistentDataContainer pdc = entity.getPersistentDataContainer();

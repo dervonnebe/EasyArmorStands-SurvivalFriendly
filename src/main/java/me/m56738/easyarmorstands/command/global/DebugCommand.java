@@ -6,6 +6,7 @@ import me.m56738.easyarmorstands.api.element.Element;
 import me.m56738.easyarmorstands.api.property.Property;
 import me.m56738.easyarmorstands.api.property.type.PropertyType;
 import me.m56738.easyarmorstands.command.sender.EasCommandSender;
+import me.m56738.easyarmorstands.message.Message;
 import me.m56738.easyarmorstands.command.sender.EasPlayer;
 import me.m56738.easyarmorstands.permission.Permissions;
 import me.m56738.easyarmorstands.session.SessionImpl;
@@ -28,6 +29,10 @@ public class DebugCommand {
     @Permission(Permissions.DEBUG)
     @CommandDescription("easyarmorstands.command.description.debug")
     public void debug(EasCommandSender sender) {
+        if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() && !EasyArmorStandsPlugin.getInstance().survivalFriendly().allowDebug) {
+            sender.sendMessage(Message.error("easyarmorstands.error.not-using-editor"));
+            return;
+        }
         EasyArmorStandsPlugin plugin = EasyArmorStandsPlugin.getInstance();
         String version = plugin.getPluginMeta().getVersion();
         sender.sendMessage(Component.text("EasyArmorStands v" + version, NamedTextColor.GOLD, TextDecoration.UNDERLINED));

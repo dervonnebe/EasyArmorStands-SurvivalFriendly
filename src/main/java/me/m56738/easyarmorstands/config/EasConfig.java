@@ -7,6 +7,7 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 public class EasConfig {
     public UpdateCheckConfig updateCheck = new UpdateCheckConfig();
     public EditorConfig editor = new EditorConfig();
+    public SurvivalFriendlyConfig survivalFriendly = new SurvivalFriendlyConfig();
     public MessageConfig message = new MessageConfig();
     public IntegrationConfig integration = new IntegrationConfig();
     public LimitConfig limits = new LimitConfig();

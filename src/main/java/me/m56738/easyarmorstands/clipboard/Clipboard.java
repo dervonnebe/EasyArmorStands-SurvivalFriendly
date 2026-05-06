@@ -1,5 +1,6 @@
 package me.m56738.easyarmorstands.clipboard;
 
+import me.m56738.easyarmorstands.EasyArmorStandsPlugin;
 import me.m56738.easyarmorstands.api.element.Element;
 import me.m56738.easyarmorstands.api.property.Property;
 import me.m56738.easyarmorstands.api.property.PropertyMap;
@@ -44,10 +45,21 @@ public class Clipboard {
 
     public <T> void handlePropertyShiftClick(Property<T> property) {
         PropertyType<T> type = property.getType();
-        if (player.hasPermission(Permissions.CLIPBOARD) && type.canCopy(player)) {
+        if (player.hasPermission(Permissions.CLIPBOARD) && type.canCopy(player) && canCopy(type)) {
             properties.put(type, property.getValue());
             player.sendMessage(Message.success("easyarmorstands.success.property-copied", type.getName()));
         }
+    }
+
+    private boolean canCopy(PropertyType<?> type) {
+        if (!EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode()) {
+            return true;
+        }
+        if (EasyArmorStandsPlugin.getInstance().survivalFriendly().copyEquipment) {
+            return true;
+        }
+        String permission = type.getPermission();
+        return permission == null || !permission.startsWith("easyarmorstands.property.equipment.");
     }
 
     void removeDisallowed() {

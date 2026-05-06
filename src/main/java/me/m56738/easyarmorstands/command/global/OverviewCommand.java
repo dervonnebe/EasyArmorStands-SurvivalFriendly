@@ -26,6 +26,10 @@ public class OverviewCommand {
         if (sender.get().hasPermission(Permissions.GIVE)) {
             sender.sendMessage(Message.hint("easyarmorstands.hint.give-tool", Message.command("/eas give")));
         }
-        sender.sendMessage(Message.hint("easyarmorstands.hint.show-help", Message.command("/eas help")));
+        if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode()) {
+            sender.sendMessage(Message.hint("easyarmorstands.hint.show-help", Message.command("/eas")));
+        } else {
+            sender.sendMessage(Message.hint("easyarmorstands.hint.show-help", Message.command("/eas help")));
+        }
     }
 }

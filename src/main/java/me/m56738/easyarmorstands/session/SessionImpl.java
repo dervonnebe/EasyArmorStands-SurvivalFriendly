@@ -28,6 +28,7 @@ import me.m56738.easyarmorstands.group.GroupMember;
 import me.m56738.easyarmorstands.group.layer.GroupRootLayer;
 import me.m56738.easyarmorstands.particle.EditorParticle;
 import me.m56738.easyarmorstands.particle.GizmoParticleProvider;
+import me.m56738.easyarmorstands.message.Message;
 import me.m56738.easyarmorstands.property.TrackedPropertyContainer;
 import me.m56738.easyarmorstands.session.context.AddContextImpl;
 import me.m56738.easyarmorstands.session.context.ClickContextImpl;
@@ -320,7 +321,7 @@ public final class SessionImpl implements Session {
     private Component createActionBar(Component value, Set<Input> availableInputs) {
         InputHintsConfig config = EasyArmorStandsPlugin.getInstance().getConfiguration().editor.inputHints;
         if (!config.enabled) {
-            return value;
+            return appendSurvivalFriendlyHelp(value);
         }
 
         TextComponent.Builder builder = Component.text();
@@ -343,7 +344,18 @@ public final class SessionImpl implements Session {
             builder.append(createInput(config, config.sneakKey, Component.translatable("easyarmorstands.input.more"), Style.style(NamedTextColor.GRAY)));
         }
 
-        return builder.build();
+        return appendSurvivalFriendlyHelp(builder.build());
+    }
+
+    private Component appendSurvivalFriendlyHelp(Component value) {
+        if (!EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() || !EasyArmorStandsPlugin.getInstance().survivalFriendly().showActionBarHelp) {
+            return value;
+        }
+        return Component.text()
+                .append(value)
+                .append(Component.space())
+                .append(Message.hint("easyarmorstands.hint.show-help", Message.command("/eas")))
+                .build();
     }
 
     private Component createInput(InputHintsConfig config, Component key, Component input, Style style) {

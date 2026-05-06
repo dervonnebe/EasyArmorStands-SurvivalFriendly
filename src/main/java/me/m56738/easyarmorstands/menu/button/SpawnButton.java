@@ -1,5 +1,6 @@
 package me.m56738.easyarmorstands.menu.button;
 
+import me.m56738.easyarmorstands.EasyArmorStandsPlugin;
 import me.m56738.easyarmorstands.api.EasyArmorStands;
 import me.m56738.easyarmorstands.api.editor.Session;
 import me.m56738.easyarmorstands.api.editor.layer.ElementSelectionLayer;
@@ -10,9 +11,13 @@ import me.m56738.easyarmorstands.api.element.SelectableElement;
 import me.m56738.easyarmorstands.api.menu.button.MenuButton;
 import me.m56738.easyarmorstands.api.menu.button.MenuIcon;
 import me.m56738.easyarmorstands.api.menu.click.MenuClickContext;
+import me.m56738.easyarmorstands.message.Message;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Material;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 
@@ -50,9 +55,21 @@ public class SpawnButton implements MenuButton {
     @Override
     public void onClick(MenuClickContext context) {
         if (context.isLeftClick()) {
+            ItemStack requiredItem = null;
+            if (EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() && type.key().equals(EntityType.ARMOR_STAND.key())) {
+                requiredItem = new ItemStack(Material.ARMOR_STAND);
+                if (!player.getInventory().containsAtLeast(requiredItem, 1)) {
+                    player.sendMessage(Message.error("easyarmorstands.error.inventory-full"));
+                    context.closeMenu();
+                    return;
+                }
+            }
             ElementSpawnRequest spawnRequest = EasyArmorStands.get().elementSpawnRequest(type);
             spawnRequest.setPlayer(player);
             Element element = spawnRequest.spawn();
+            if (element != null && requiredItem != null) {
+                player.getInventory().removeItem(requiredItem);
+            }
 
             Session session = EasyArmorStands.get().sessionManager().getSession(player);
             if (session != null) {

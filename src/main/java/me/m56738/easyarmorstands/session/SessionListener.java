@@ -23,8 +23,10 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.EntityPlaceEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.FurnaceBurnEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.inventory.PrepareItemCraftEvent;
 import org.bukkit.event.player.PlayerAnimationEvent;
 import org.bukkit.event.player.PlayerAnimationType;
@@ -327,6 +329,19 @@ public class SessionListener implements Listener {
                 event.getInventory().setResult(null);
                 break;
             }
+        }
+    }
+
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (!plugin.isSurvivalFriendlyMode()) {
+            return;
+        }
+        if (event.getInventory().getType() != InventoryType.MERCHANT) {
+            return;
+        }
+        if (plugin.isTool(event.getCurrentItem()) || plugin.isTool(event.getCursor())) {
+            event.setCancelled(true);
         }
     }
 

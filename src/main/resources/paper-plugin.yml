@@ -3,7 +3,7 @@ version: '${version}'
 api-version: '${minecraftVersion}'
 main: 'me.m56738.easyarmorstands.EasyArmorStandsPlugin'
 bootstrapper: 'me.m56738.easyarmorstands.EasyArmorStandsBootstrap'
-author: '56738'
+author: '56738 and Jack F. (dervonnebe)'
 
 dependencies:
   server:

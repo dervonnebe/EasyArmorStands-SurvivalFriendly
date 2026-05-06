@@ -38,6 +38,7 @@ import me.m56738.easyarmorstands.command.sender.EasCommandSender;
 import me.m56738.easyarmorstands.command.sender.EasPlayer;
 import me.m56738.easyarmorstands.command.util.ElementSelection;
 import me.m56738.easyarmorstands.config.EasConfig;
+import me.m56738.easyarmorstands.config.SurvivalFriendlyConfig;
 import me.m56738.easyarmorstands.config.serializer.EasSerializers;
 import me.m56738.easyarmorstands.config.version.Transformations;
 import me.m56738.easyarmorstands.config.version.game.GameVersionTransformation;
@@ -171,11 +172,13 @@ public class EasyArmorStandsPlugin extends JavaPlugin implements EasyArmorStands
         instance = this;
         EasyArmorStandsInitializer.initialize(this);
 
+        loadConfig();
+
         elementTypeRegistry = new ElementTypeRegistryImpl();
         propertyTypeRegistry = new PropertyTypeRegistryImpl();
         entityElementProviderRegistry = new EntityElementProviderRegistryImpl();
 
-        new DefaultPropertyTypes(propertyTypeRegistry);
+        new DefaultPropertyTypes(propertyTypeRegistry, config.survivalFriendly);
 
         ArmorStandElementType armorStandElementType = new ArmorStandElementType();
         elementTypeRegistry.register(armorStandElementType);
@@ -214,7 +217,6 @@ public class EasyArmorStandsPlugin extends JavaPlugin implements EasyArmorStands
             entityElementProviderRegistry.register(new DefaultEntityElementProvider<>(type));
         }
 
-        loadConfig();
         messageManager = new MessageManager();
         messageManager.load(config);
 
@@ -457,6 +459,14 @@ public class EasyArmorStandsPlugin extends JavaPlugin implements EasyArmorStands
         item.editPersistentDataContainer(pdc ->
                 pdc.set(toolKey, PersistentDataType.BYTE, (byte) 1));
         return item;
+    }
+
+    public boolean isSurvivalFriendlyMode() {
+        return config != null && config.survivalFriendly.enabled;
+    }
+
+    public SurvivalFriendlyConfig survivalFriendly() {
+        return config.survivalFriendly;
     }
 
     public boolean isTool(@Nullable ItemStack item) {

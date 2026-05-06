@@ -1,5 +1,6 @@
 package me.m56738.easyarmorstands.element;
 
+import me.m56738.easyarmorstands.EasyArmorStandsPlugin;
 import me.m56738.easyarmorstands.api.ArmorStandPart;
 import me.m56738.easyarmorstands.api.ArmorStandSize;
 import me.m56738.easyarmorstands.api.EasyArmorStands;
@@ -19,6 +20,7 @@ import me.m56738.easyarmorstands.api.property.type.InteractionPropertyTypes;
 import me.m56738.easyarmorstands.api.property.type.ItemDisplayPropertyTypes;
 import me.m56738.easyarmorstands.api.property.type.MannequinPropertyTypes;
 import me.m56738.easyarmorstands.api.property.type.TextDisplayPropertyTypes;
+import me.m56738.easyarmorstands.config.SurvivalFriendlyConfig;
 import me.m56738.easyarmorstands.menu.button.SpawnButton;
 import me.m56738.easyarmorstands.property.armorstand.ArmorStandLockProperty;
 import me.m56738.easyarmorstands.property.armorstand.ArmorStandPoseProperty;
@@ -74,14 +76,19 @@ public class EntityElementListener implements Listener {
     @EventHandler
     public void onSpawnMenuOpen(SpawnMenuOpenEvent event) {
         ElementTypeRegistry elementTypeRegistry = EasyArmorStands.get().elementTypeRegistry();
+        SurvivalFriendlyConfig survivalFriendly = EasyArmorStandsPlugin.getInstance().survivalFriendly();
         Player player = event.getPlayer();
         MenuBuilder builder = event.getBuilder();
         builder.addButton(new SpawnButton(player, elementTypeRegistry.get(EntityType.ARMOR_STAND.getKey()), MenuIcon.of(Material.ARMOR_STAND)));
         builder.addButton(new SpawnButton(player, elementTypeRegistry.get(EntityType.ITEM_DISPLAY.getKey()), MenuIcon.of(Material.STICK)));
         builder.addButton(new SpawnButton(player, elementTypeRegistry.get(EntityType.BLOCK_DISPLAY.getKey()), MenuIcon.of(Material.STONE)));
         builder.addButton(new SpawnButton(player, elementTypeRegistry.get(EntityType.TEXT_DISPLAY.getKey()), MenuIcon.of(Material.NAME_TAG)));
-        builder.addButton(new SpawnButton(player, elementTypeRegistry.get(EntityType.INTERACTION.getKey()), MenuIcon.of(Material.TARGET)));
-        builder.addButton(new SpawnButton(player, elementTypeRegistry.get(EntityType.MANNEQUIN.getKey()), MenuIcon.of(Material.PLAYER_HEAD)));
+        if (!survivalFriendly.enabled || survivalFriendly.allowInteractionEntities) {
+            builder.addButton(new SpawnButton(player, elementTypeRegistry.get(EntityType.INTERACTION.getKey()), MenuIcon.of(Material.TARGET)));
+        }
+        if (!survivalFriendly.enabled || survivalFriendly.allowMannequins) {
+            builder.addButton(new SpawnButton(player, elementTypeRegistry.get(EntityType.MANNEQUIN.getKey()), MenuIcon.of(Material.PLAYER_HEAD)));
+        }
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -91,6 +98,7 @@ public class EntityElementListener implements Listener {
     }
 
     private void registerProperties(Entity entity, PropertyRegistry registry) {
+        SurvivalFriendlyConfig survivalFriendly = EasyArmorStandsPlugin.getInstance().survivalFriendly();
         registerEntityProperties(entity, registry);
         if (entity instanceof LivingEntity) {
             registerLivingEntityProperties((LivingEntity) entity, registry);
@@ -99,10 +107,12 @@ public class EntityElementListener implements Listener {
             registerMobProperties((Mob) entity, registry);
         }
         if (entity instanceof ArmorStand) {
-            registerArmorStandProperties((ArmorStand) entity, registry);
+            registerArmorStandProperties((ArmorStand) entity, registry, survivalFriendly);
         }
         if (entity instanceof Mannequin) {
-            registerMannequinProperties((Mannequin) entity, registry);
+            if (!survivalFriendly.enabled || survivalFriendly.allowMannequins) {
+                registerMannequinProperties((Mannequin) entity, registry, survivalFriendly);
+            }
         }
         if (entity instanceof Display) {
             registerDisplayProperties((Display) entity, registry);
@@ -116,7 +126,7 @@ public class EntityElementListener implements Listener {
         if (entity instanceof TextDisplay) {
             registerTextDisplayProperties((TextDisplay) entity, registry);
         }
-        if (entity instanceof Interaction) {
+        if (entity instanceof Interaction && (!survivalFriendly.enabled || survivalFriendly.allowInteractionEntities)) {
             registerInteractionProperties((Interaction) entity, registry);
         }
     }
@@ -125,7 +135,9 @@ public class EntityElementListener implements Listener {
         registry.register(Property.of(EntityPropertyTypes.GLOWING, entity::isGlowing, entity::setGlowing));
         registry.register(new EntityLocationProperty(entity));
         registry.register(Property.of(EntityPropertyTypes.SILENT, entity::isSilent, entity::setSilent));
-        registry.register(new EntityTagsProperty(entity));
+        if (!EasyArmorStandsPlugin.getInstance().isSurvivalFriendlyMode() || EasyArmorStandsPlugin.getInstance().survivalFriendly().allowTags) {
+            registry.register(new EntityTagsProperty(entity));
+        }
         registry.register(new EntityOptionalComponentProperty(EntityPropertyTypes.CUSTOM_NAME, entity, entity::customName, entity::customName));
         registry.register(Property.of(EntityPropertyTypes.CUSTOM_NAME_VISIBLE, entity::isCustomNameVisible, entity::setCustomNameVisible));
     }
@@ -153,15 +165,19 @@ public class EntityElementListener implements Listener {
         return entity.canUseEquipmentSlot(slot);
     }
 
-    private void registerArmorStandProperties(ArmorStand entity, PropertyRegistry registry) {
+    private void registerArmorStandProperties(ArmorStand entity, PropertyRegistry registry, SurvivalFriendlyConfig survivalFriendly) {
         registry.register(Property.of(ArmorStandPropertyTypes.ARMS, entity::hasArms, entity::setArms));
         registry.register(Property.of(ArmorStandPropertyTypes.BASE_PLATE, entity::hasBasePlate, entity::setBasePlate));
-        registry.register(Property.of(ArmorStandPropertyTypes.MARKER, entity::isMarker, entity::setMarker));
+        if (!survivalFriendly.enabled || survivalFriendly.allowMarker) {
+            registry.register(Property.of(ArmorStandPropertyTypes.MARKER, entity::isMarker, entity::setMarker));
+        }
         registry.register(Property.of(ArmorStandPropertyTypes.SIZE,
                 () -> ArmorStandSize.get(entity),
                 size -> entity.setSmall(size.isSmall())));
         registry.register(Property.of(EntityPropertyTypes.VISIBLE, entity::isVisible, entity::setVisible));
-        registry.register(Property.of(ArmorStandPropertyTypes.CAN_TICK, entity::canTick, entity::setCanTick));
+        if (!survivalFriendly.enabled || survivalFriendly.allowCanTick) {
+            registry.register(Property.of(ArmorStandPropertyTypes.CAN_TICK, entity::canTick, entity::setCanTick));
+        }
         registry.register(Property.of(ArmorStandPropertyTypes.GRAVITY, entity::hasGravity, entity::setGravity));
         registry.register(Property.of(ArmorStandPropertyTypes.INVULNERABLE, entity::isInvulnerable, entity::setInvulnerable));
         registry.register(new ArmorStandLockProperty(entity));
@@ -171,11 +187,13 @@ public class EntityElementListener implements Listener {
     }
 
     @SuppressWarnings("UnstableApiUsage")
-    private void registerMannequinProperties(Mannequin entity, PropertyRegistry registry) {
+    private void registerMannequinProperties(Mannequin entity, PropertyRegistry registry, SurvivalFriendlyConfig survivalFriendly) {
         registry.register(Property.of(MannequinPropertyTypes.MAIN_HAND, entity::getMainHand, entity::setMainHand));
         registry.register(Property.of(MannequinPropertyTypes.PROFILE, entity::getProfile, entity::setProfile));
         registry.register(Property.of(MannequinPropertyTypes.IMMOVABLE, entity::isImmovable, entity::setImmovable));
-        registry.register(new EntityOptionalComponentProperty(MannequinPropertyTypes.DESCRIPTION, entity, entity::getDescription, entity::setDescription));
+        if (!survivalFriendly.enabled || survivalFriendly.allowDescriptions) {
+            registry.register(new EntityOptionalComponentProperty(MannequinPropertyTypes.DESCRIPTION, entity, entity::getDescription, entity::setDescription));
+        }
         registry.register(Property.of(MannequinPropertyTypes.POSE, entity::getPose, entity::setPose));
         registry.register(new MannequinCapeVisibleProperty(entity));
         registry.register(new MannequinJacketVisibleProperty(entity));
